@@ -3,12 +3,11 @@ import { css } from '@emotion/react'
 import styled from '@emotion/styled'
 import { BsGithub, BsRssFill } from 'react-icons/bs'
 
+import { Container } from '@/styles'
+
 const StyledFooter = tw.footer`
   py-4
   bg-primary-dark
-`
-const Container = tw.div`
-  container mx-auto py-4
 `
 
 const IconList = styled.ul`

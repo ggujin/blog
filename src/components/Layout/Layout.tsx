@@ -3,14 +3,12 @@ import tw from 'twin.macro'
 
 import { Header } from './Header'
 import { Footer } from './Footer'
+import { Container } from '@/styles'
 
 const Main = tw.main`
   min-h-[500px]
   bg-primary-main 
   border-y-primary-light border-y-[1px]
-`
-const Container = tw.div`
-  container mx-auto py-4
 `
 
 interface Props {

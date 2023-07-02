@@ -1,12 +1,10 @@
 import tw from 'twin.macro'
 import { VscDebugConsole } from 'react-icons/vsc'
 
+import { Container } from '@/styles'
+
 const StyledHeader = tw.header`
   bg-primary-main
-`
-
-const Container = tw.div`
-  container mx-auto py-4
 `
 
 const ContainerInner = tw.div`
