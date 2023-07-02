@@ -7,7 +7,7 @@ const List = tw.ul`
 `
 
 const ListItem = tw.li`
-  py-4 px-2 border-b-primary-light border-b-[1px]
+  py-4 px-2 border-b-primary-light border-b-[1px] last:border-b-0
 `
 
 const Tag = tw.span`
