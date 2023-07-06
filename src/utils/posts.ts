@@ -40,6 +40,6 @@ function getPost(filename: string): Post {
   return {
     ...(data as Frontmatter),
     content,
-    slug: filename.slice(filename.lastIndexOf('.')),
+    slug: filename.slice(0, filename.lastIndexOf('.')),
   }
 }
