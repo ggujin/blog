@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
 import { format } from 'date-fns'
+import removeMd from 'remove-markdown'
 
 interface Frontmatter {
   emoji: string
@@ -26,16 +27,22 @@ export function getPosts() {
 
   const posts: Post[] = dirFiles
     .filter(file => file.name.endsWith('.mdx'))
-    .map(post => getPost(post.name))
+    .map(post => getPost({ filename: post.name, shouldSummarize: true }))
 
   return posts
 }
 
 export function getPostBySlug(slug: string) {
-  return getPost(`${slug}.mdx`)
+  return getPost({ filename: `${slug}.mdx` })
 }
 
-function getPost(filename: string): Post {
+function getPost({
+  filename,
+  shouldSummarize,
+}: {
+  filename: string
+  shouldSummarize?: boolean
+}): Post {
   const fileContent = fs.readFileSync(
     path.join(process.cwd(), 'posts', filename),
     'utf-8',
@@ -45,7 +52,7 @@ function getPost(filename: string): Post {
 
   return {
     ...rest,
-    content,
+    content: shouldSummarize ? removeMd(content).slice(0, 200) : content,
     createdAt: format(createdAt, 'yyyy-MM-dd'),
     slug: filename.slice(0, filename.lastIndexOf('.')),
   }
