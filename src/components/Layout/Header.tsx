@@ -11,7 +11,7 @@ const ContainerInner = tw.div`
 flex justify-between items-center
 `
 
-const Menu = tw.ul`block`
+const Menu = tw.ul`block text-lg font-semibold`
 const MenuItem = tw.li`inline-block p-0 pl-4`
 
 export function Header() {
@@ -19,8 +19,8 @@ export function Header() {
     <StyledHeader>
       <Container>
         <ContainerInner>
-          <h1 tw="font-semibold">
-            <VscDebugConsole size={20} tw="inline-block font-bold pr-1" />
+          <h1 tw="font-bold">
+            <VscDebugConsole size={25} tw="inline-block font-bold pr-2" />
             Tech blog
           </h1>
           <Menu>
