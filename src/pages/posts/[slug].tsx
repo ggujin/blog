@@ -1,8 +1,8 @@
-import type { NextPage, GetStaticPaths, GetStaticProps } from 'next/'
+import type { NextPage, GetStaticPaths, GetStaticProps } from 'next'
 import { format } from 'date-fns'
 
 import { getPosts, getPostBySlug } from '@/utils/posts'
-import { Layout } from '@/components'
+import { Layout, MarkdownRenderer } from '@/components'
 import { PostItem } from '@/types'
 
 interface PageProps {
@@ -18,7 +18,7 @@ const PostDetailPage: NextPage<PageProps> = ({ post }) => {
         {emoji}
         {title}
       </h1>
-      <div dangerouslySetInnerHTML={{ __html: content ?? '' }} />
+      <MarkdownRenderer content={content} />
       <p>{createdAt}</p>
     </Layout>
   )
