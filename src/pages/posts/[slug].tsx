@@ -33,14 +33,13 @@ export const getStaticPaths: GetStaticPaths = () => {
 }
 
 export const getStaticProps: GetStaticProps = context => {
-  const slug = context.params?.slug as string
-  const { createdAt, ...rest } = getPostBySlug(slug)
+  const slug = context?.params?.slug as string
+  const post = getPostBySlug(slug)
 
   return {
     props: {
       post: {
-        ...rest,
-        createdAt: format(createdAt, 'yyyy-MM-dd'),
+        post,
       },
     },
   }
