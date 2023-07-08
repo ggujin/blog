@@ -19,7 +19,7 @@ export function Header() {
     <StyledHeader>
       <Container>
         <ContainerInner>
-          <h1 tw="font-bold">
+          <h1 tw="font-bold text-xl">
             <VscDebugConsole size={25} tw="inline-block font-bold pr-2" />
             Tech blog
           </h1>
