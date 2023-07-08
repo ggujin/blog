@@ -1,6 +1,8 @@
-import tw from 'twin.macro'
+import type { GetStaticProps, NextPage } from 'next'
 
 import { Layout, PostList } from '@/components'
+import { getPosts } from '@/utils/posts'
+import { PostItem } from '@/types'
 
 const posts = [
   {
@@ -29,10 +31,24 @@ const posts = [
   },
 ]
 
-export default function Home() {
+interface PageProps {
+  posts: PostItem[]
+}
+
+const HomePage: NextPage<PageProps> = ({ posts }) => {
   return (
     <Layout>
       <PostList posts={posts} />
     </Layout>
   )
 }
+
+export const getStaticProps: GetStaticProps = () => {
+  return {
+    props: {
+      posts: getPosts(),
+    },
+  }
+}
+
+export default HomePage
