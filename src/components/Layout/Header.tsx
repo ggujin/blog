@@ -1,5 +1,6 @@
 import tw from 'twin.macro'
 import { VscDebugConsole } from 'react-icons/vsc'
+import Link from 'next/link'
 
 import { Container } from '@/styles'
 
@@ -19,10 +20,12 @@ export function Header() {
     <StyledHeader>
       <Container>
         <ContainerInner>
-          <h1 tw="font-bold text-xl">
-            <VscDebugConsole size={25} tw="inline-block font-bold pr-2" />
-            Tech blog
-          </h1>
+          <Link href="/">
+            <h1 tw="font-bold text-xl">
+              <VscDebugConsole size={25} tw="inline-block font-bold pr-2" />
+              Tech blog
+            </h1>
+          </Link>
           <Menu>
             <MenuItem>Resume</MenuItem>
             <MenuItem>Posts</MenuItem>
