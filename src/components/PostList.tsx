@@ -1,4 +1,5 @@
 import tw from 'twin.macro'
+import Link from 'next/link'
 
 import type { PostItem } from '@/types'
 
@@ -26,11 +27,13 @@ export function PostList({ posts }: Props) {
     <List>
       {posts.map(({ slug, emoji, title, content, createdAt, tags }) => (
         <ListItem key={slug}>
-          <h1 tw="text-lg font-semibold mb-1">
-            <span tw="text-xl mr-1">{emoji}</span>
-            {title}
-          </h1>
-          <p tw="text-xs mb-1">{content}</p>
+          <Link href={`/posts/${slug}`}>
+            <h1 tw="text-lg font-semibold mb-1">
+              <span tw="text-xl mr-1">{emoji}</span>
+              {title}
+            </h1>
+          </Link>
+          <p tw="text-sm mb-1 line-clamp-2">{content}</p>
           <p tw="text-xs text-gray-400">{createdAt}</p>
           <p tw="leading-none">
             {tags.map(tag => (
