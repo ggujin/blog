@@ -38,9 +38,7 @@ export const getStaticProps: GetStaticProps = context => {
 
   return {
     props: {
-      post: {
-        post,
-      },
+      post,
     },
   }
 }
