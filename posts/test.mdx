@@ -8,3 +8,251 @@ tags:
 ---
 
 글내용을 여기에 쓰는겁니다.
+
+- test
+
+## 소제목
+
+이번 포스팅에서는 GraphQL 에서 N+1 문제를 해결하기 위한 솔루션인 DataLoader에 대한 소개와 GraphQL 에 DataLoader를 어떤식으로 적용해야되는지를 정리해보려고 한다.
+
+## N+1 문제
+
+N+1 문제는 ORM을 사용할때 주로 발생하는 성능 문제이다.
+
+`Post` 엔티티와 `Comment` 엔티티가 있다고 가정해보자. 이 엔티티간의 관계는 `1:N`으로 정의할 수 있다. Post 목록과 post에 해당하는 comments를 조회하려 한다면 comment entity가 lazy loading되면서 N(각각의 comments 조회) + 1(post 조회) 만큼 쿼리가 실행되서 N+1 문제라고 부른다.
+
+해결방법으로는 lazy loading을 하는 대신 미리 JOIN 연산을 통해 fetch하는 방법을 생각할 수 있다. 여기에 대한 방법은 ORM 마다 차이가 있을 수 있다.
+
+```typescript
+// TypeORM example
+// lazy
+const posts = await Post.find({})
+const comments = await Promise.all(
+  posts.map(async p => {
+    // TypeORM에서 lazy relation 경우 p.comments 는 promise array 이다.
+    const comments = await p.comments
+    return comments
+  }),
+)
+
+// eager
+const posts = await Post.find({ relations: ['comments'] })
+```
+
+## GraphQL 에서의 N+1 문제
+
+에서 발생하는 N+1문제도 위와 비슷하다.
+위에서의 엔티티관계를 GraphQL SDL로 작성하면 아래와 같다.
+
+```graphql
+type Post {
+  id: Int!
+  title: String!
+  content: String!
+  comments: [Comment!]!
+}
+
+type Comment {
+  id: Int!
+  content: String!
+}
+
+type Query {
+  posts: [Post!]!
+}
+```
+
+post 목록과 comments 를 가져오는 query를 작성해보자.
+
+```graphql
+query {
+  posts {  # posts query (1)
+    id
+    title
+    content
+    comments { # comments query (N) -> Post 개수만큼
+      id
+      ...
+    }
+  }
+}
+```
+
+위와 같이 comments 부분에서 성능문제가 발생하게 된다.
+GraphQL 에서 resolver를 구성하는 전략은 여러가지가 있겠지만 보통 다른 type과 관계가 있는 경우 resolver를 분리해서 구현하는 경우가 많기 때문이다.
+
+```javascript
+const resolver = {
+  Query: {
+    posts: async () => {
+      return Post.find({})
+    },
+  },
+  Post: {
+    // posts query를 호출할경우 post 개수(N) 만큼 호출된다.
+    comments: async root => {
+      return Comment.find({ where: { postId: root.id } })
+    },
+  },
+}
+```
+
+물론 아래와 같이 posts resolver에서 data를 join 해서 fetch후에 return 한다면 N+1 문제는 발생하지 않을 수 있다.
+
+```typescript
+const resovler = {
+  Query: {
+    posts: async () => {
+      const posts = await Post.find({ relations: ['comments'] })
+      return posts
+    },
+  },
+}
+
+/*
+query {
+  posts {
+    id
+    title
+    content
+  }
+}
+*/
+```
+
+하지만 위와 같이 resolver를 구현한다면 query에서 comments field 를 요청하지 않아도 join해서 fetch해서 data를 가져오게된다. client에서 받는 데이터는 over fetching이 일어나지 않지만 실제 데이터를 load하는 곳에서는 over fetching이 일어나고 있는 것이다.
+
+## DataLoader
+
+DataLoader는 data fetch 할때 나타나는 N+1 문제를 batching을 통해 1+1로 변환해주는 library이다.
+주로 에서 많이 사용되지만 GrpahQL에 어떤 의존성을 가지고 있지는 않다.
+
+## Batching
+
+DataLoader는 javascript의 event-loop 을 이용한다. 주요기능인 batching은 event-loop 중 하나의 tick에서 실행된 data fetch에 대한 요청을 하나의 요청으로 모아서 실행하고 그 결과를 다시 알맞게 분배하는 역할을 한다.
+
+아래 간단한 예제를 보자.
+
+```javascript
+const DataLoader = require('dataloader')
+
+// fake data
+const posts = [
+  { id: 1, title: 'test1' },
+  { id: 2, title: 'test2' },
+  { id: 3, title: 'test3' },
+  { id: 4, title: 'test4' },
+  { id: 5, title: 'test5' },
+]
+
+// fake db operation
+const findAllPosts = () =>
+  new Promise(resolve => {
+    setTimeout(() => {
+      resolve(posts)
+    }, 100)
+  })
+
+// batchLoadFn 의 결과는 promise여야 한다.
+const batchLoadFn = async keys => {
+  const results = await findAllPosts()
+  console.log(keys)
+  // db 에서 받아온 결과를 요청온 key에 mapping
+  return keys.map(k => results.find(p => p.id === k))
+}
+
+const postLoader = new DataLoader(batchLoadFn)
+
+// tick 1
+postLoader.load(1).then(console.log)
+postLoader.load(2).then(console.log)
+
+// tick 2
+setTimeout(() => {
+  postLoader.load(3).then(console.log)
+  postLoader.load(4).then(console.log)
+}, 100)
+```
+
+DataLoader의 constructor는 batch요청을 어떻게 처리할지에 대한 `batchLoadFn` 을 인자로 받는다.
+이 `batchLoadFn`의 역할은 하나의 tick에서 들어온 `key`들에 대한 요청을 모아서 하나의 요청을 만들어 DB에 query하고 그 결과를 요청온 key에 맞게 mapping 한다.
+(이 예제에서는 편의상 memory상에 data를 활용하였다.)
+
+`setTimeout`은 event-loop 상에 하나의 tick 에서 실행되지 않고 다음으로 실행을 미루게 된다.
+
+### Output
+
+```text
+[1, 2]
+[3, 4]
+
+{ id: 1 ... }
+{ id: 2 ... }
+{ id: 3 ... }
+{ id: 4 ... }
+```
+
+tick 이 2번 발생했기 때문에 load를 4번 호출하여도 실제요청은 2번만 실행되는걸 확인할 수 있다.
+
+전체적인 동작을 다시 정리하면 `load` 를 개별적으로 호출하지만 실행되는 tick 별로 grouping해서 batch 요청을 하게되고 그 결과를 다시 개별적으로 나눠서 반환하게 된다.
+즉, 데이터를 lazy loading하면서 성능저하의 문제를 해결할 수 있다.
+
+## GraphQL에 DataLoader 적용
+
+아까 문제가 되었던 resolver에 DataLoader를 적용해보자.
+comments 에서 data를 fetching하는 부분에 DataLoader를 적용해서 해결할 수 있다.
+
+GraphQL 에서 DataLoader를 적용하는 순서는 다음과 같다.
+
+1. load할 data에 따라 `batchLoadFn` 를 작성한다.
+2. Context에서 해당 DataLoader 객체를 생성한다.
+3. resolver에서 context의 DataLoader를 통해서 `load`를 호출한다.
+
+DataLoader의 instance는 자체적으로 `cacheMap` 을 가지고 있다. 같은 key에 대한 요청이 들어오면 caching된 값을 사용하게 되는데 web application에서 이런방식은 위험할 수 있다. 이러한 이유로 매 request마다 새로운 DataLoader 객체를 생성해서 사용하는것을 권장하고 있다.
+
+`CommentsLoader`
+
+```javascript
+const batchLoadFn = async postIds => {
+  const comments = await Comment.find({ where: { postId: In(postIds) } })
+  return postIds.map(id => comments.filter(c => c.postId === id))
+}
+
+export const commentsLoader = () => new DataLoader(batchLoadFn)
+```
+
+`Context`
+
+```javascript
+const server = new ApolloServer({
+  ...,
+  context: () => ({
+    loaders: {
+      commentsLoader: commentsLoader()
+    }
+  })
+})
+```
+
+`Resolver`
+
+```javascript
+...
+comments: async (root, _, context) => {
+  return context.loaders.commentsLoader.load(root.id)
+}
+```
+
+위와같이 DataLoader를 적용하면 comments resolver에서의 모든 load 요청은 하나의 요청으로 묶여서 실행되서 성능문제가 해결된다. 또한 data를 초기에 모두 fetch하지 않고 lazy하게 유지할 수 있기 때문에 역할에 맞게 resolver를 분리해서 복잡성을 줄일 수 있다.
+
+## 마치며
+
+DataLoader를 적용하는 것은 큰 어려움이 없었던 것 같다. 처음엔 동작방식이 좀 난해하게 느껴졌는데 라이브러리 코드를 읽고나서 보니 Promise의 이점과 event-loop의 특성을 이용하는 부분이 인상적이였다.
+
+## Ref
+
+- https://github.com/graphql/dataloader
+- https://medium.com/gaplabs-engineering/make-more-efficient-requests-with-dataloader-96ff50eb8998
+- https://nodejs.org/ko/docs/guides/event-loop-timers-and-nexttick/
+- https://engineering.shopify.com/blogs/engineering/solving-the-n-1-problem-for-graphql-through-batching
+- https://github.com/typeorm/typeorm/blob/master/docs/eager-and-lazy-relations.md
