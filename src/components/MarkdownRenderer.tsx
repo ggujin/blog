@@ -12,11 +12,11 @@ interface Props {
 const Container = styled.div`
   ${tw`text-sm`}
   ul {
-    ${tw`pl-4 list-disc`}
+    ${tw`pl-4 list-disc leading-6`}
   }
 
   ol {
-    ${tw`pl-4 list-decimal py-2`}
+    ${tw`pl-4 list-decimal py-2 leading-6`}
   }
 
   h1,
@@ -28,19 +28,19 @@ const Container = styled.div`
   }
 
   h1 {
-    ${tw`text-4xl font-bold`}
-  }
-
-  h2 {
     ${tw`text-3xl font-bold`}
   }
 
+  h2 {
+    ${tw`text-2xl font-bold`}
+  }
+
   h3 {
-    ${tw`text-2xl font-semibold`}
+    ${tw`text-xl font-semibold`}
   }
 
   h4 {
-    ${tw`text-xl font-semibold`}
+    ${tw`text-lg font-semibold`}
   }
 
   p {
