@@ -1,8 +1,7 @@
 import type { NextPage, GetStaticPaths, GetStaticProps } from 'next'
-import { format } from 'date-fns'
 
 import { getPosts, getPostBySlug } from '@/utils/posts'
-import { Layout, MarkdownRenderer, PostTitle } from '@/components'
+import { Layout, MarkdownRenderer, PostTitle, PostTags } from '@/components'
 import { PostItem } from '@/types'
 
 interface PageProps {
@@ -10,12 +9,13 @@ interface PageProps {
 }
 
 const PostDetailPage: NextPage<PageProps> = ({ post }) => {
-  const { title, content, emoji, createdAt } = post ?? {}
+  const { title, content, emoji, createdAt, tags } = post ?? {}
   // 여기서 에러나면 브라우저 콘솔
   return (
     <Layout>
       <div tw="py-8">
         <PostTitle emoji={emoji} title={title} />
+        <PostTags tags={tags} />
         <p tw="text-xs text-contents-dark mb-4">{createdAt}</p>
         <MarkdownRenderer content={content} />
       </div>

@@ -1,6 +1,7 @@
 import tw from 'twin.macro'
 import Link from 'next/link'
 
+import { PostTags } from './PostTags'
 import type { PostItem } from '@/types'
 
 const List = tw.ul`
@@ -9,11 +10,6 @@ const List = tw.ul`
 
 const ListItem = tw.li`
   py-4 px-2 border-b-primary-light border-b-[1px] last:border-b-0
-`
-
-const Tag = tw.span`
-  text-xs
-  text-gray-400 mr-1 mb-1
 `
 
 interface Props {
@@ -34,12 +30,8 @@ export function PostList({ posts }: Props) {
             </h1>
           </Link>
           <p tw="text-sm mb-1 line-clamp-2">{content}</p>
+          <PostTags tags={tags} />
           <p tw="text-xs text-gray-400">{createdAt}</p>
-          <p tw="leading-none">
-            {tags.map(tag => (
-              <Tag key={tag}>{tag}</Tag>
-            ))}
-          </p>
         </ListItem>
       ))}
     </List>
