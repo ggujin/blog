@@ -1,5 +1,4 @@
 import tw from 'twin.macro'
-import { css } from '@emotion/react'
 import styled from '@emotion/styled'
 import { BsGithub, BsRssFill } from 'react-icons/bs'
 

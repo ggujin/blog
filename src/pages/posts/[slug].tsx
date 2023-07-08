@@ -9,6 +9,8 @@ interface PageProps {
 }
 
 const PostDetailPage: NextPage<PageProps> = ({ post }) => {
+  if (!post) return null
+
   const { title, content, emoji, createdAt, tags } = post ?? {}
   // 여기서 에러나면 브라우저 콘솔
   return (

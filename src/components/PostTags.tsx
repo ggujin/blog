@@ -10,6 +10,7 @@ const Tag = tw.span`
 `
 
 export function PostTags({ tags }: Props) {
+  if (tags.length === 0) return null
   return (
     <p tw="leading-none mb-1">
       {tags.map(tag => (
